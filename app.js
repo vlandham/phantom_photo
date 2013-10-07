@@ -1,5 +1,6 @@
 var express = require("express");
 var phantom = require("phantom");
+var renderElement = require('./renderElement.js');
 
 var app = express();
 app.use(express.logger());
@@ -7,19 +8,28 @@ app.use(express.logger());
 var url = "http://www.google.com";
 var phantomHelper;
 
-function processPage(status) {
-  page.evaluate(function() {return document.title},function(result) {
-    console.log('page title is: ' + result);
-    phantomHelper.exit();
-  });
-}
 
 app.get('/', function(request, response) {
-  response.send('Hello World!');
   phantom.create(function(ph) {
     phantomHelper = ph;
+
     ph.createPage(function(page) {
+      function processPage(status) {
+        page.viewportSize = { width: 600, height: 600 };
+        page.evaluate(function() {return document.title}, function(result) {
+          console.log('page title is: ' + result);
+          // var pic = renderElement(page, '#vis');
+          page.renderBase64('png', function(pic) {
+            console.log(pic);
+            response.send(pic);
+
+          });
+          phantomHelper.exit();
+        });
+      };
+
       page.open(url, processPage);
+      response.send('Hello World!');
     });
   });
 });
