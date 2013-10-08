@@ -9,7 +9,9 @@ var url = "http://www.google.com";
 var phantomHelper;
 
 
-app.get('/', function(request, response) {
+app.get('/:user_id', function(request, response) {
+  var user_id = request.params.format;
+
   phantom.create(function(ph) {
     phantomHelper = ph;
 
@@ -17,11 +19,16 @@ app.get('/', function(request, response) {
       function processPage(status) {
         page.viewportSize = { width: 600, height: 600 };
         page.evaluate(function() {return document.title}, function(result) {
-          console.log('page title is: ' + result);
+          // console.log('page title is: ' + result);
           // var pic = renderElement(page, '#vis');
           page.renderBase64('png', function(pic) {
-            console.log(pic);
-            response.send(pic);
+            var buf = new Buffer(pic, 'base64');
+
+            response.writeHead(200, {'Content-Type': 'image/png' });
+            response.end(buf, 'binary');
+
+
+            // response.send(buf);
 
           });
           phantomHelper.exit();
@@ -29,7 +36,7 @@ app.get('/', function(request, response) {
       };
 
       page.open(url, processPage);
-      response.send('Hello World!');
+      // response.send('Hello World!');
     });
   });
 });
